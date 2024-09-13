@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CSP Translator</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; }
+        textarea { width: 100%; height: 150px; margin-bottom: 20px; }
+        .response { margin-top: 20px; padding: 10px; border: 1px solid #ccc; white-space: pre-wrap; word-wrap: break-word; }
+        .result { font-weight: bold; color: green; }
+        hr { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>CSP Translator</h1>
+    <form id="translatorForm">
+        <textarea name="cspCode" id="cspCode" placeholder="Enter your CSP code here..."></textarea><br>
+        <button type="submit">Translate</button>
+    </form>
+    <div class="response" id="response"></div>
+
+    <script>
+        document.getElementById('translatorForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const cspCode = document.getElementById('cspCode').value;
+            const responseDiv = document.getElementById('response');
+
+            const response = await fetch('/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cspCode })
+            });
+
+            const data = await response.json();
+            const formattedResult = data.result
+                .split('\n\n')
+                .map(sentence => `<div>${sentence.replace(/\n/g, '<br>')}</div>`)
+                .join('<br><br><hr><br><br>');
+
+            responseDiv.innerHTML = `<p class="result">Translation Result:</p>${formattedResult}`;
+        }
+    </script>
+</body>
+</html>

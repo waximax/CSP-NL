@@ -1,0 +1,36 @@
+channel a : {0..1}
+channel b : {0..1}
+channel c : {0..1}
+
+
+P1 = a.0 -> SKIP
+Q1 = b.1 -> SKIP
+R1 = P1 [] Q1
+
+P2 = true & (a.0 -> SKIP)
+Q2 = false & (b.1 -> SKIP)
+
+AlphabetisedParallelProcess = P1 [{a.0} || {b.1}] Q1
+
+GeneralisedParallelProcess = P1 [| {a.0, b.1} |] Q1
+
+InterleaveProcess = P1 ||| Q1
+
+SequentialProcess = P1 ; Q1
+
+InputPatternProcess = c?x -> SKIP
+
+RestrictedInputProcess = c?x:{0, 1} -> SKIP
+
+OutputProcess = c!1 -> SKIP
+
+NondeterministicInputProcess = c$x -> SKIP
+
+NondeterministicRestrictedInputProcess = c$x:{0, 1} -> SKIP
+
+
+
+assert P1 :[has trace]: <a.0>
+assert P2 :[has trace]: <a.0>
+assert SequentialProcess :[has trace]: <a.0, b.1>
+

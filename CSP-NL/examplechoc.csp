@@ -1,0 +1,13 @@
+channel coin, card, choc, powerOn, shutdown
+
+VendingMachine = coin -> choc -> STOP
+
+Person = (coin -> STOP) [] (card -> STOP)
+
+VendingMachineParallel = VendingMachine [|{coin}|] Person
+
+VendingMachine2 = coin -> choc -> VendingMachine2
+VendingMachinePower = ( (powerOn -> SKIP) ; VendingMachine2 ) /\ (shutdown -> STOP)
+
+
+
