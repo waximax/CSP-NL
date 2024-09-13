@@ -4,13 +4,18 @@ from CSPParser import CSPParser
 from CSPLexer import CSPLexer
 from CSPVisitor import CSPVisitor
 
+# This class transforms the CSP parse tree into natural language descriptions
 class CSPToASTVisitor(CSPVisitor):
+    
+    # This method processes channel definitions and extracts channel names and ranges.
     def visitChannelDefinition(self, ctx: CSPParser.ChannelDefinitionContext):
         channels_with_range = []
         channels_without_range = []
-
+        
+        # Iterates over each channel ID and processes it
         for i in range(len(ctx.ID())):
             channel_name = ctx.ID(i).getText()
+            # Checks if the channel has a specified range
             if ctx.getChildCount() > 1 and ctx.INT(0):
                 range_values = ctx.INT(0).getText()
                 if ctx.INT(1):
@@ -30,7 +35,7 @@ class CSPToASTVisitor(CSPVisitor):
         return None
 
 
-
+    # This method processes process definitions and generates their descriptions
     def visitProcessDefinition(self, ctx: CSPParser.ProcessDefinitionContext):
         process_name = ctx.ID().getText()
         print(f"Defining process {process_name}.")
@@ -41,7 +46,7 @@ class CSPToASTVisitor(CSPVisitor):
         print(f"{process_name} does the following: {explanation}.")
         return None
 
-
+    # Processes assertions and generates a description
     def visitAssertion(self, ctx: CSPParser.AssertionContext):
         process_name = ctx.ID().getText()
         assertion_type = self.visit(ctx.assertionType())
@@ -49,9 +54,10 @@ class CSPToASTVisitor(CSPVisitor):
         print(result)
         return result
 
+    # Interprets assertion types such as deadlock-free, divergence-free, etc.
     def visitAssertionType(self, ctx: CSPParser.AssertionTypeContext):
-        assertion_text = ctx.getText()
-
+        assertion_text = ctx.getText() # Get the assertion text
+        # Generate description based on the type of assertion
         if '[has trace]' in assertion_text:
             trace = self.visit(ctx.trace())
             trace_description = ", ".join([event for event in trace.strip('<>').split(', ')])
@@ -71,29 +77,32 @@ class CSPToASTVisitor(CSPVisitor):
         else:
             return None
 
-
+    # Visits a trace of events in an assertion
     def visitTrace(self, ctx: CSPParser.TraceContext):
         events = [self.visit(event) for event in ctx.event()]
         return f"<{', '.join(events)}>"
 
+    # Visits a single event within a trace or prefix expression
     def visitEvent(self, ctx: CSPParser.EventContext):
-        return ctx.getText()
+        return ctx.getText() # Returns the event text
 
+    # Processes basic expressions such as STOP, SKIP, or identifiers
     def visitBaseExpression(self, ctx: CSPParser.BaseExpressionContext):
         if ctx.STOP_RULE():
             return "STOP (the process ends here)."
         elif ctx.SKIP_RULE():
             return "SKIP (indicating successful completion)."
         elif ctx.ID():
-            return ctx.ID().getText()
+            return ctx.ID().getText() # Return the process ID
         elif ctx.expression():
-            return self.visit(ctx.expression())
+            return self.visit(ctx.expression()) # Recursively handle the expression
         return None
 
-
+    # Processes complex expressions and converts them to natural language
     def visitExpression(self, ctx: CSPParser.ExpressionContext):
         if ctx.getChildCount() == 3:
-            operator = ctx.getChild(1).getText()
+            operator = ctx.getChild(1).getText() # Retrieve the operator
+            # Based on the operator, generate the appropriate description
             if operator == '[]':
                 process1_description = self.visit(ctx.getChild(0))
                 process2_description = self.visit(ctx.getChild(2))
@@ -134,7 +143,7 @@ class CSPToASTVisitor(CSPVisitor):
                     f"Any event not in {events} may be performed independently by either process.")
         return self.visitChildren(ctx)
 
-
+    # Handles prefix expressions (such as events followed by processes)
     def visitPrefixExpression(self, ctx: CSPParser.PrefixExpressionContext):
         event = ctx.event().getText()
         process = self.visit(ctx.expression())
@@ -151,7 +160,7 @@ class CSPToASTVisitor(CSPVisitor):
 
 
 
-
+    # Handles input pattern expressions and generates natural language explanations
     def visitInputPatternExpression(self, ctx: CSPParser.InputPatternExpressionContext):
         channel = ctx.ID(0).getText()
         pattern = ctx.ID(1).getText()
@@ -167,7 +176,8 @@ class CSPToASTVisitor(CSPVisitor):
         return (f"This is used when you want to restrict the input to specific values, ensuring the process only handles "
                 f"certain inputs using External Choice. This process waits to receive a value from channel {channel}, "
                 f"but the value must be either {', '.join(values)}, and then transitions to  {process}")
-
+    
+    # Handles output expressions (sending a value on a channel)
     def visitOutputExpression(self, ctx: CSPParser.OutputExpressionContext):
         channel = ctx.ID().getText()
         value = ctx.INT().getText()
@@ -190,21 +200,21 @@ class CSPToASTVisitor(CSPVisitor):
                 f"certain inputs using Internal Choice. This process waits to receive a value from channel {channel}, "
                 f"but the value must be either {', '.join(values)}, and then transitions to  {process}")
 
-
+    # Main function to parse a CSP file and generate natural language descriptions
 def main(argv):
     if len(argv) < 2:
         print("Usage: python translate_ast.py <input_file.csp>")
         return
 
     input_file = argv[1]
-    input_stream = FileStream(input_file, encoding='utf-8')
-    lexer = CSPLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    parser = CSPParser(stream)
-    tree = parser.cspFile()
+    input_stream = FileStream(input_file, encoding='utf-8') # Read the CSP file
+    lexer = CSPLexer(input_stream)  # Tokenize the input
+    stream = CommonTokenStream(lexer) # Generate token stream
+    parser = CSPParser(stream) # Parse the token stream
+    tree = parser.cspFile() # Generate the parse tree
 
-    visitor = CSPToASTVisitor()
-    visitor.visit(tree)
+    visitor = CSPToASTVisitor() # Create a visitor instance
+    visitor.visit(tree) # Visit the parse tree
 
 if __name__ == '__main__':
     main(sys.argv)
