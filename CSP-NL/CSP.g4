@@ -57,9 +57,9 @@ baseExpression
     | '(' expression ')'
     ;
 
-eventList: event (',' event)* ;  // 事件集
+eventList: event (',' event)* ;  // Event set
 
-event: ID ('.' INT)* ;  // 事件允许通道名称加上具体的值
+event: ID ('.' INT)* ;  // Event allows channel name followed by specific values
 
 STOP_RULE: 'STOP' ;
 
@@ -67,8 +67,8 @@ SKIP_RULE: 'SKIP' ;
 
 BOOL: 'true' | 'false' ;
 
-ID: [a-zA-Z_][a-zA-Z_0-9]* ;  // 标识符规则
+ID: [a-zA-Z_][a-zA-Z_0-9]* ;  // Identifier rule
 
-INT: [0-9]+ ;  // 数字规则
+INT: [0-9]+ ;  // Number rule
 
 WS: [ \t\r\n]+ -> skip ;
